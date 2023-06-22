@@ -53,7 +53,7 @@ def get_data(input_file):
         pressure = np.delete(pressure, negative_pressure_indexes)
         q_adsorbed = np.delete(q_adsorbed, negative_pressure_indexes)
     
-    ## checks if relative pressure points are monotonically increasing, if not,
+    ## checks if relative pressure points are strictly monotonically increasing, if not,
     ## removes problematic points
     #if not (pressure == np.sort(pressure)).all():
     if any(pressure[i] < pressure[i+1] for i in range(len(pressure)-1)):
