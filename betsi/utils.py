@@ -45,7 +45,8 @@ def get_data(input_file):
     
     comments_to_data = {'has_negative_pressure_points': False,\
                         'strictly_monotonically_increasing_pressure': True,\
-                        'rel_pressure_between_0_and_1': True}
+                        'rel_pressure_between_0_and_1': True,
+                        'has_interpolation_failed':False}
     ## removes negetive relative pressure points if any
     negative_pressure_indexes = np.where(pressure < 0)[0]
     if len(negative_pressure_indexes) > 0:

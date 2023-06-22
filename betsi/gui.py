@@ -477,7 +477,7 @@ class BETSI_widget(QWidget):
             
             # Set the signal alarm to raise a TimeoutError after 30 seconds
             signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(5)
+            signal.alarm(30)
             try:
                 while (not self.bet_filter_result.has_valid_areas) and (iter_num < 20):
                     print('Adding extra interpolated points to the data')
@@ -514,7 +514,6 @@ class BETSI_widget(QWidget):
                     iter_num += 1
                 signal.alarm(0)  # Cancel the alarm if the calculation finishes within the time limit
             except CalculationTimeoutError:
-                pass
                 self.bet_object.comments_to_data['has_interpolation_failed'] = True
         
         ## Errors for pop-up message box
@@ -560,8 +559,9 @@ class BETSI_widget(QWidget):
             else:
                 errors = "Consider the following error(s):\n" + errors + "\n"
                 warnings = "Consider the following warning(s):\n" + warnings + "\n"
-                errors_warnings = errors + warnings
-            self.show_dialog(errors_warnings, information)
+                warnings = errors + warnings
+                information = "Note(s):\n" + information
+            self.show_dialog(warnings, information)
 
 
     def show_dialog(self, warnings, information):
