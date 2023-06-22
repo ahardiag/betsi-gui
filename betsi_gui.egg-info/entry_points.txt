@@ -1,0 +1,2 @@
+[console_scripts]
+betsi = betsi.__main__:main

@@ -44,7 +44,7 @@ def get_data(input_file):
     
     
     comments_to_data = {'has_negative_pressure_points': False,\
-                        'monotonically_increasing_pressure': True,\
+                        'strictly_monotonically_increasing_pressure': True,\
                         'rel_pressure_between_0_and_1': True}
     ## removes negetive relative pressure points if any
     negative_pressure_indexes = np.where(pressure < 0)[0]
@@ -55,8 +55,9 @@ def get_data(input_file):
     
     ## checks if relative pressure points are monotonically increasing, if not,
     ## removes problematic points
-    if not (pressure == np.sort(pressure)).all():
-        comments_to_data['monotonically_increasing_pressure'] = False
+    #if not (pressure == np.sort(pressure)).all():
+    if any(pressure[i] < pressure[i+1] for i in range(len(pressure)-1)):
+        comments_to_data['strictly_monotonically_increasing_pressure'] = False
         temp_index = 0
         temp_pressure = pressure
         temp_q_adsorbed = q_adsorbed

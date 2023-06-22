@@ -514,8 +514,8 @@ class BETSI_widget(QWidget):
         if self.bet_object.comments_to_data['has_negative_pressure_points']:
             warnings += "- Imported adsorption data has negative pressure point(s)!\n"
             information += "- Negative pressure point(s) have been removed from the data.\n"
-        if not self.bet_object.comments_to_data['monotonically_increasing_pressure']:
-            warnings += "- The pressure points are not monotonically increasing!\n"
+        if not self.bet_object.comments_to_data['strictly_monotonically_increasing_pressure']:
+            warnings += "- The pressure points are not strictly monotonically increasing!\n"
             information += "- Non-monotonically increasing pressure point(s) have been removed from the data.\n"
         if not self.bet_object.comments_to_data['rel_pressure_between_0_and_1']:
             warnings += "- The relative pressure values must lie between 0 and 1!\n"
