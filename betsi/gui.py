@@ -631,7 +631,10 @@ class BETSI_widget(QWidget):
                 errors = "Consider the following error(s):\n"
                 information = traceback.format_exc()
                 self.show_dialog(errors, information)
-            self.export()
+            try :
+                self.export()
+            except :
+                pass
             self.clear()
 
         print(f"\nBET analysis on {len(input_file_paths)} input files terminated.")
