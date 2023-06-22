@@ -474,40 +474,56 @@ class BETSI_widget(QWidget):
         if not self.bet_filter_result.has_valid_areas:
             iter_num = 0
             self.bet_object.comments_to_data['interpolated_points_added'] = True
-            while (not self.bet_filter_result.has_valid_areas) and (iter_num < 20):
-                print('Adding extra interpolated points to the data')
-                
-                ##pressure = self.bet_object.pressure
-                ##q_adsorbed = self.bet_object.q_adsorbed
-                comments_to_data = self.bet_object.comments_to_data
-                interpolated_points_added = self.bet_object.comments_to_data['interpolated_points_added']
-                original_pressure_data = self.bet_object.original_pressure_data
-                original_q_adsorbed_data = self.bet_object.original_q_adsorbed_data
-                
-                self.bet_object = None
-                self.bet_filter_result = None
-                pressure_added_points, q_adsorbed_added_points = isotherm_pchip_reconstruction(original_pressure_data, original_q_adsorbed_data, (iter_num+1)*round(len(original_pressure_data)/1.5))
-                self.bet_object = BETResult(pressure_added_points, q_adsorbed_added_points)
-                self.bet_object.comments_to_data = comments_to_data
-                self.bet_object.comments_to_data['interpolated_points_added'] = interpolated_points_added
-                self.bet_object.original_pressure_data = original_pressure_data
-                self.bet_object.original_q_adsorbed_data = original_q_adsorbed_data
-                
-                # Apply the currently selected filters.
-                self.bet_filter_result = BETFilterAppliedResults(self.bet_object,
-                                                                 min_num_pts=min_num_pts,
-                                                                 min_r2=min_r2,
-                                                                 use_rouq1=use_rouq1,
-                                                                 use_rouq2=use_rouq2,
-                                                                 use_rouq3=use_rouq3,
-                                                                 use_rouq4=use_rouq4,
-                                                                 use_rouq5=use_rouq5,
-                                                                 max_perc_error=max_perc_error,
-                                                                 adsorbate=adsorbate, 
-                                                                 cross_sectional_area=cross_sectional_area,
-                                                                 molar_volume=molar_volume)
-                iter_num += 1
+            
+            # Set the signal alarm to raise a TimeoutError after 30 seconds
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(5)
+            try:
+                while (not self.bet_filter_result.has_valid_areas) and (iter_num < 20):
+                    print('Adding extra interpolated points to the data')
+
+                    ##pressure = self.bet_object.pressure
+                    ##q_adsorbed = self.bet_object.q_adsorbed
+                    comments_to_data = self.bet_object.comments_to_data
+                    interpolated_points_added = self.bet_object.comments_to_data['interpolated_points_added']
+                    original_pressure_data = self.bet_object.original_pressure_data
+                    original_q_adsorbed_data = self.bet_object.original_q_adsorbed_data
+
+#                    self.bet_object = None
+#                    self.bet_filter_result = None
+                    pressure_added_points, q_adsorbed_added_points = isotherm_pchip_reconstruction(original_pressure_data, original_q_adsorbed_data, (iter_num+1)*round(len(original_pressure_data)/1.5))
+                    self.bet_object = BETResult(pressure_added_points, q_adsorbed_added_points)
+                    self.bet_object.comments_to_data = comments_to_data
+                    self.bet_object.comments_to_data['interpolated_points_added'] = interpolated_points_added
+                    self.bet_object.original_pressure_data = original_pressure_data
+                    self.bet_object.original_q_adsorbed_data = original_q_adsorbed_data
+
+                    # Apply the currently selected filters.
+                    self.bet_filter_result = BETFilterAppliedResults(self.bet_object,
+                                                                     min_num_pts=min_num_pts,
+                                                                     min_r2=min_r2,
+                                                                     use_rouq1=use_rouq1,
+                                                                     use_rouq2=use_rouq2,
+                                                                     use_rouq3=use_rouq3,
+                                                                     use_rouq4=use_rouq4,
+                                                                     use_rouq5=use_rouq5,
+                                                                     max_perc_error=max_perc_error,
+                                                                     adsorbate=adsorbate, 
+                                                                     cross_sectional_area=cross_sectional_area,
+                                                                     molar_volume=molar_volume)
+                    iter_num += 1
+                signal.alarm(0)  # Cancel the alarm if the calculation finishes within the time limit
+            except CalculationTimeoutError:
+                pass
+                self.bet_object.comments_to_data['has_interpolation_failed'] = True
         
+        ## Errors for pop-up message box
+        errors = ""
+        information = ""
+        if self.bet_object.comments_to_data['has_interpolation_failed']:
+            errors += "- The interpolation step took too long to complete. Your data might be too noisy. \n"
+            information += ""
+
         ## Warnings for pop-up message box
         warnings = ""
         information = ""
@@ -531,18 +547,23 @@ class BETSI_widget(QWidget):
                 if information != "":
                     information = "Note(s):\n" + information
                 self.show_dialog(warnings, information)
-        else:
-            if warnings == "":
+        else: 
+            if warnings == "" and errors == "":
                 warnings = "No valid areas found! Try again with a new set of data and/or change your criteria"
-                self.show_dialog(warnings, information)
-            else:
+                #self.show_dialog(warnings, information)
+            elif errors == "":
                 warnings_1 = "No valid areas found! Try again with a new set of data and/or change your criteria.\n"
                 warnings_2 = "Consider the following warning(s):\n"
                 warnings = warnings_1 + warnings_2 + warnings
                 information = "Note(s):\n" + information
-                self.show_dialog(warnings, information)
-    
-            
+                #self.show_dialog(warnings, information)
+            else:
+                errors = "Consider the following error(s):\n" + errors + "\n"
+                warnings = "Consider the following warning(s):\n" + warnings + "\n"
+                errors_warnings = errors + warnings
+            self.show_dialog(errors_warnings, information)
+
+
     def show_dialog(self, warnings, information):
         # Log the warnings
         if self.warning_widget is False:
