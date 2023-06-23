@@ -555,6 +555,8 @@ class BETSI_widget(QWidget):
                 warnings_2 = "Consider the following warning(s):\n"
                 warnings = warnings_1 + warnings_2 + warnings
                 information = "Note(s):\n" + information
+                print(self.bet_filter_result.rouq1,self.bet_filter_result.rouq2,self.bet_filter_result.rouq3)
+
                 #self.show_dialog(warnings, information)
             else:
                 errors = "Consider the following error(s):\n" + errors + "\n"
@@ -635,18 +637,8 @@ class BETSI_widget(QWidget):
             self.display_plot = False
             self.warning_widget = False
             #self.run_calculation()
-            # Set the signal alarm to raise a TimeoutError after 30 seconds
-            signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(30) 
             try :
                 self.run_calculation()
-                signal.alarm(0)  # Cancel the alarm if the calculation finishes within the time limit
-            except CalculationTimeoutError:
-                # Handle the timeout error
-                print("The calculation took too long to complete.")
-                errors = "Consider the following error(s):\n"
-                information = "The calculation took too long to complete."
-                self.show_dialog(errors, information)
             except Exception as e:
                 # Traceback the error in a file and avoid shut down
                 errors = "Consider the following error(s):\n"
