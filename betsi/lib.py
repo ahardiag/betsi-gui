@@ -21,6 +21,8 @@ from scipy.interpolate import splrep, pchip_interpolate
 matplotlib.use('Qt5Agg')
 #matplotlib.use('agg') # do not print plots new Qt windows
 
+import itertools
+
 ##NITROGEN_RADIUS = 1.62E-19
 ##NITROGEN_MOL_VOL = 44.64117195
 AVOGADRO_N = 6.02E+23
@@ -208,8 +210,8 @@ class BETFilterAppliedResults:
             filter_mask = filter_mask * bet_result.rouq3
 
         if kwargs.get('use_rouq4', True):
-            max_perc_error = kwargs.get('max_perc_error', 20)
-            filter_mask = filter_mask * (bet_result.pc_error < max_perc_error)
+            self.max_perc_error = kwargs.get('max_perc_error', 20)
+            filter_mask = filter_mask * (bet_result.pc_error < self.max_perc_error)
 
         ##if kwargs.get('use_rouq5', False):
         ##    filter_mask = filter_mask * bet_result.rouq5
@@ -224,12 +226,12 @@ class BETFilterAppliedResults:
             mol_vol[adsorbate] = kwargs.get('molar_volume')
 
         # Filter results that have less than the minimum points
-        min_points = kwargs.get('min_num_pts', 10)
-        filter_mask = filter_mask * (bet_result.point_count >= min_points)
+        self.min_num_pts = kwargs.get('min_num_pts', 10)
+        filter_mask = filter_mask * (bet_result.point_count >= self.min_num_pts)
 
         # Block out results that have less than the minimum R2
-        min_r2 = kwargs.get('min_r2', 0.9)
-        filter_mask = filter_mask * (bet_result.fit_rsquared > min_r2)
+        self.min_r2 = kwargs.get('min_r2', 0.9)
+        filter_mask = filter_mask * (bet_result.fit_rsquared > self.min_r2)
 
         ## assert np.sum(filter_mask) != 0, "NO valid areas found"
         self.has_valid_areas = False
@@ -388,6 +390,49 @@ class BETFilterAppliedResults:
         np.savetxt(str(matrices_f / 'pc_error.csv'),
                    self.pc_error, delimiter=',', fmt='%1.3f')
 
+    def get_extra_info_criteria(self,bet_result):
+
+        matrices = {'rouq1':bet_result.rouq1,
+                    'rouq2':bet_result.rouq2,
+                    'rouq3':bet_result.rouq3,
+                    'rouq4':(bet_result.pc_error < 20.0),
+                    'rouq5':bet_result.rouq5,
+                    'min_num_pts':(bet_result.point_count >= self.min_num_pts),
+                    'fit_rsquared':(bet_result.fit_rsquared > self.min_r2)
+           }
+
+        # Initialize variables for the subgroup with the largest overlap
+        max_overlap_count = 0
+        max_overlap_subgroup = None
+        l_matrices = list(matrices.values())
+
+        # Generate all subgroups of 1, 2, or 3 matrices
+        max_overlap_count = 0
+        subset_size = len(l_matrices)
+        while max_overlap_count == 0 and subset_size > 0:
+            for indices in itertools.combinations(range(len(l_matrices)), subset_size):
+                subgroup = [l_matrices[i] for i in indices]
+                overlap = np.all(subgroup, axis=0)
+                overlap_count = np.sum(overlap)
+                
+                # Update the subgroup with the largest overlap
+                if overlap_count > max_overlap_count:
+                    max_overlap_count = overlap_count
+                    max_overlap_subgroup = indices
+            subset_size -= 1
+
+        # Display the result
+        result_str = f"- Extra information about critera filters:\n"
+        if max_overlap_subgroup is not None:
+            result_str += f"Criteria with best overlap ({max_overlap_count}) : {' '.join(str(x) for x in [list(matrices.keys())[index] for index in max_overlap_subgroup])}\n"
+            no_overlap_subgroup = [index for index,matrix in enumerate(l_matrices) if index not in max_overlap_subgroup]
+            result_str += f"Criteria with no overlap: {' '.join(str(x) for x in [list(matrices.keys())[index] for index in no_overlap_subgroup])}\n"
+            result_str += f"Number of intervals found to satisfy each criteria:\n"
+            for key,matrix in matrices.items():
+                result_str += f"{key}({np.sum(np.array(matrix),dtype=int)}) "
+        else:
+            result_str += f"No subgroup of criteria with no zero overlap found."
+        return result_str
 
 def analyse_file(input_file, output_dir=None, **kwargs):
     """ Entry point for performing BET analysis on a single named csv file.

@@ -520,7 +520,7 @@ class BETSI_widget(QWidget):
         errors = ""
         information = ""
         if self.bet_object.comments_to_data['has_interpolation_failed']:
-            errors += "- The interpolation step took too long to complete. Your data might be too noisy. \n"
+            errors += "- The interpolation step took too long to complete. Check the quality of your data. \n"
             information += ""
 
         ## Warnings for pop-up message box
@@ -549,22 +549,22 @@ class BETSI_widget(QWidget):
         else: 
             if warnings == "" and errors == "":
                 warnings = "No valid areas found! Try again with a new set of data and/or change your criteria"
+                information += self.bet_filter_result.get_extra_info_criteria(self.bet_object)
                 #self.show_dialog(warnings, information)
-            elif errors == "":
+            elif warnings != "" and errors == "":
                 warnings_1 = "No valid areas found! Try again with a new set of data and/or change your criteria.\n"
                 warnings_2 = "Consider the following warning(s):\n"
                 warnings = warnings_1 + warnings_2 + warnings
+                information += self.bet_filter_result.get_extra_info_criteria(self.bet_object)
                 information = "Note(s):\n" + information
-                print(self.bet_filter_result.rouq1,self.bet_filter_result.rouq2,self.bet_filter_result.rouq3)
-
                 #self.show_dialog(warnings, information)
             else:
                 errors = "Consider the following error(s):\n" + errors + "\n"
                 warnings = "Consider the following warning(s):\n" + warnings + "\n"
                 warnings = errors + warnings
+                information += self.bet_filter_result.get_extra_info_criteria(self.bet_object)
                 information = "Note(s):\n" + information
             self.show_dialog(warnings, information)
-
 
     def show_dialog(self, warnings, information):
         # Log the warnings
