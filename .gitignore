@@ -1,0 +1,6 @@
+# Ignore a specific directory
+build/
+tests/
+betsi/__pycache__/
+betsi_gui.egg-info/
+dist/
