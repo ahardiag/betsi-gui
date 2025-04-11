@@ -617,7 +617,9 @@ class BETSI_widget(QWidget):
             # Create a local sub-directory for export.
             target_path = Path(self.target_filepath)
             output_subdir = Path(self.output_dir) / target_path.name
+            output_subdir = output_subdir.with_suffix("")
             output_subdir.mkdir(exist_ok=True)
+
             self.bet_filter_result.export(output_subdir)
             self.current_fig.savefig(str(output_subdir / f'{target_path.stem}_plot.pdf'), bbox_inches='tight')
             if self.display_plot:
