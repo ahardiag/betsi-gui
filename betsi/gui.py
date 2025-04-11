@@ -573,6 +573,7 @@ class BETSI_widget(QWidget):
             # Create a local sub-directory for log if not already done.
             target_path = Path(self.target_filepath)
             output_subdir = Path(self.output_dir) / target_path.name
+            output_subdir = output_subdir.with_suffix("")
             output_subdir.mkdir(exist_ok=True)
             with (output_subdir / 'log_warnings_errors.txt').open('w') as fp:
                 print(f'\n{warnings}{information}\n',file=fp)
